@@ -157,17 +157,35 @@ class KaramlConfig:
             # If this map is a dict of frontmost app based conditions, which
             # may contain multiple complex modifications
             elif isinstance(rhs, dict):
-                # Append a modification for each condition
-                for frontmost_app_key, to_keys in rhs.items():
-                    karamlized_key = get_karamlized_key(*gkk_args, to_keys)
-                    frontmost_app_dict = get_app_conditions_dict(
-                        frontmost_app_key, rhs)
-                    karamlized_key.conditions["conditions"].append(
-                        frontmost_app_dict)
+                lang_keys = {"ru", "en"}
+                if rhs.keys() == lang_keys:
+                    for lang, rhs in rhs.items():
+                        karamlized_key = get_karamlized_key(*gkk_args, rhs)
+                        manipulators.append(karamlized_key.make_mapping_dict())
+                        manipulators = self.insert_toggle_off(
+                            karamlized_key, manipulators)
 
-                    manipulators.append(karamlized_key.make_mapping_dict())
-                    manipulators = self.insert_toggle_off(
-                        karamlized_key, manipulators)
+                        lang_cond = {
+                            "input_sources": [
+                                {
+                                    "language": lang
+                                }
+                            ],
+                            "type": "input_source_if"
+                        }
+                        karamlized_key.conditions["conditions"].append(lang_cond)
+                else:
+                    # Append a modification for each condition
+                    for frontmost_app_key, to_keys in rhs.items():
+                        karamlized_key = get_karamlized_key(*gkk_args, to_keys)
+                        frontmost_app_dict = get_app_conditions_dict(
+                            frontmost_app_key, rhs)
+                        karamlized_key.conditions["conditions"].append(
+                            frontmost_app_dict)
+
+                        manipulators.append(karamlized_key.make_mapping_dict())
+                        manipulators = self.insert_toggle_off(
+                            karamlized_key, manipulators)
 
         return manipulators
 
